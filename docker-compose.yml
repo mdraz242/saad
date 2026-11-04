@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: betongportalen-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: betong_user
+      POSTGRES_PASSWORD: betong_secret_password
+      POSTGRES_DB: betongportalen
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: betongportalen-backend
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      PORT: 5001
+      NODE_ENV: production
+      DATABASE_URL: postgresql://betong_user:betong_secret_password@postgres:5432/betongportalen?schema=public
+      JWT_SECRET: production_super_secret_jwt_key_betongportalen_2026
+      CLIENT_URL: http://localhost:5173
+    ports:
+      - "5001:5001"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: betongportalen-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+
+volumes:
+  postgres_data:
+

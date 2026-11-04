@@ -1,0 +1,355 @@
+// PostgreSQL schema for Betongportalen production deployment
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model StaffUser {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  passwordHash String
+  name         String
+  phone        String?
+  role         String      @default("EMPLOYEE") // EMPLOYEE | ADMINISTRATOR
+  permissions  String?     // JSON array of strings e.g. ["cases:view", "cases:edit", ...]
+  isActive     Boolean     @default(true)
+  lastLogin    DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  messages             CaseMessage[]
+  quotations           Quotation[]
+  statusChanges        CaseStatusHistory[]
+  auditLogs            AuditLog[]
+  assignedProjects     Project[]
+  projectStatusChanges ProjectStatusHistory[]
+}
+
+model Customer {
+  id           String      @id @default(uuid())
+  name         String
+  customerType String      @default("INDIVIDUAL") // INDIVIDUAL | BUSINESS
+  companyName  String?
+  email        String      @unique
+  phone        String
+  address      String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  cases        Case[]
+  projects     Project[]
+
+  @@index([email])
+  @@index([customerType])
+}
+
+model ProductCategory {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products    Product[]
+}
+
+model Product {
+  id             String           @id @default(uuid())
+  name           String
+  category       String           @default("Concrete")
+  categoryId     String?
+  description    String
+  defaultUnit    String           @default("m³")
+  availableUnits String           @default("m³,tonnes,pieces")
+  isActive       Boolean          @default(true)
+  sortOrder      Int              @default(0)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  productCategory ProductCategory? @relation(fields: [categoryId], references: [id])
+  caseProducts    CaseProduct[]
+  projectMaterials ProjectMaterial[]
+}
+
+model Case {
+  id                    String      @id @default(uuid())
+  caseNumber            String      @unique
+  customerId            String?
+  customerType          String      @default("INDIVIDUAL")
+  customerName          String
+  customerEmail         String
+  customerPhone         String
+  status                String      @default("NEW")
+  declineReason         String?
+  closeReason           String?
+  isQuoteComparison     Boolean     @default(false)
+  existingQuoteDetails  String?
+  quantity              Float
+  unit                  String      @default("m³")
+  deliveryAddress       String
+  desiredDeliveryDate   DateTime?
+  deliveryRequirements  String?
+  technicalRequirements String?
+  comments              String?
+  privacyAccepted       Boolean     @default(true)
+  lastActivityAt        DateTime    @default(now())
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  customer              Customer?           @relation(fields: [customerId], references: [id])
+  caseProducts          CaseProduct[]
+  messages              CaseMessage[]
+  quotations            Quotation[]
+  decisions             QuotationDecision[]
+  statusHistory         CaseStatusHistory[]
+  emailVerifications    EmailVerification[]
+  projects              Project[]
+
+  @@index([caseNumber])
+  @@index([customerEmail])
+  @@index([status])
+  @@index([customerId])
+}
+
+model CaseProduct {
+  id                 String    @id @default(uuid())
+  caseId             String
+  productId          String?
+  productName        String
+  productDescription String?
+  customRequirements String?
+
+  case               Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  product            Product?  @relation(fields: [productId], references: [id])
+}
+
+model CaseMessage {
+  id           String     @id @default(uuid())
+  caseId       String
+  senderType   String     // CUSTOMER | STAFF
+  staffUserId  String?
+  senderName   String
+  message      String
+  isRead       Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+
+  case         Case       @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  staffUser    StaffUser? @relation(fields: [staffUserId], references: [id])
+
+  @@index([caseId])
+  @@index([isRead])
+}
+
+model Quotation {
+  id                 String              @id @default(uuid())
+  caseId             String
+  quotationNumber    String
+  version            Int                 @default(1)
+  status             String              @default("DRAFT")
+  subtotal           Float               @default(0)
+  vatRate            Float               @default(25.0)
+  vatAmount          Float               @default(0)
+  grandTotal         Float               @default(0)
+  validityDate       DateTime
+  termsAndConditions String
+  notes              String?
+  createdByStaffId   String
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  case               Case                @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdBy          StaffUser           @relation(fields: [createdByStaffId], references: [id])
+  items              QuotationItem[]
+  decisions          QuotationDecision[]
+  projects           Project[]
+
+  @@unique([caseId, version])
+  @@index([caseId])
+}
+
+model QuotationItem {
+  id          String    @id @default(uuid())
+  quotationId String
+  description String
+  quantity    Float
+  unit        String
+  unitPrice   Float
+  lineTotal   Float
+  sortOrder   Int       @default(0)
+
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+}
+
+model QuotationDecision {
+  id             String    @id @default(uuid())
+  quotationId    String
+  caseId         String
+  version        Int
+  decision       String
+  decisionReason String?
+  decidedAt      DateTime  @default(now())
+  customerEmail  String
+  ipAddress      String?
+
+  quotation      Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  case           Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([quotationId])
+}
+
+model CaseStatusHistory {
+  id               String     @id @default(uuid())
+  caseId           String
+  fromStatus       String?
+  toStatus         String
+  changedByStaffId String?
+  notes            String?
+  createdAt        DateTime   @default(now())
+
+  case             Case       @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  changedBy        StaffUser? @relation(fields: [changedByStaffId], references: [id])
+
+  @@index([caseId])
+}
+
+model Project {
+  id                   String        @id @default(uuid())
+  projectId            String        @unique
+  name                 String
+  description          String?
+  customerId           String
+  caseId               String?
+  quotationId          String?
+  status               String        @default("NEW")
+  progress             Int           @default(0)
+  location             String
+  projectValue         Float         @default(0)
+  approvedValue        Float?
+  vatAmount            Float?
+  currency             String        @default("SEK")
+  startDate            DateTime?
+  expectedDeliveryDate DateTime?
+  actualCompletionDate DateTime?
+  assignedStaffId      String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  customer             Customer      @relation(fields: [customerId], references: [id])
+  case                 Case?         @relation(fields: [caseId], references: [id])
+  quotation            Quotation?    @relation(fields: [quotationId], references: [id])
+  assignedStaff        StaffUser?    @relation(fields: [assignedStaffId], references: [id])
+  materials            ProjectMaterial[]
+  statusHistory        ProjectStatusHistory[]
+
+  @@index([projectId])
+  @@index([customerId])
+  @@index([status])
+}
+
+model ProjectMaterial {
+  id                    String    @id @default(uuid())
+  projectId             String
+  productId             String?
+  productName           String
+  description           String?
+  quantity              Float
+  unit                  String    @default("m³")
+  deliveryAddress       String?
+  deliveryDate          DateTime?
+  technicalRequirements String?
+  createdAt             DateTime  @default(now())
+
+  project               Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  product               Product?  @relation(fields: [productId], references: [id])
+
+  @@index([projectId])
+}
+
+model ProjectStatusHistory {
+  id               String     @id @default(uuid())
+  projectId        String
+  fromStatus       String?
+  toStatus         String
+  changedByStaffId String?
+  notes            String?
+  progress         Int?
+  createdAt        DateTime   @default(now())
+
+  project          Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  changedBy        StaffUser? @relation(fields: [changedByStaffId], references: [id])
+
+  @@index([projectId])
+}
+
+model EmailVerification {
+  id         String   @id @default(uuid())
+  caseId     String
+  caseNumber String
+  email      String
+  otpHash    String
+  attempts   Int      @default(0)
+  isUsed     Boolean  @default(false)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  case       Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseNumber, isUsed])
+}
+
+model AuditLog {
+  id          String     @id @default(uuid())
+  action      String
+  entityType  String
+  entityId    String
+  staffUserId String?
+  description String?
+  details     String?
+  createdAt   DateTime   @default(now())
+
+  staffUser   StaffUser? @relation(fields: [staffUserId], references: [id])
+
+  @@index([entityType])
+  @@index([action])
+}
+
+model ApplicationSettings {
+  id                    String   @id @default("default-settings")
+  companyName           String   @default("Betongportalen AB")
+  companyLogoUrl        String?
+  orgNumber             String   @default("556812-3490")
+  vatNumber             String   @default("SE556812349001")
+  address               String   @default("Klarabergsviadukten 70, 111 64 Stockholm")
+  supportEmail          String   @default("kontakt@betongportalen.se")
+  supportPhone          String   @default("+46 (0)8 400 120 00")
+  defaultVatRate        Float    @default(25.0)
+  currency              String   @default("SEK")
+  defaultQuotationTerms String   @default("Quotation valid for 14 days from issue date. Delivery subject to standard Nordic transport terms and accessible unloading site. Concrete discharge time: 30 minutes included per truck.")
+  productCategories     String?
+  measurementUnits      String?  @default("m³,tonnes,pieces,pallets,running meters")
+  emailConfig           String?
+  privacySettings       String?
+  dataRetentionDays     Int      @default(1825)
+  securityConfig        String?
+  updatedAt             DateTime @updatedAt
+}
+
+model NotificationEmailLog {
+  id         String   @id @default(uuid())
+  toEmail    String
+  subject    String
+  template   String
+  bodyText   String
+  caseNumber String?
+  status     String   @default("SENT")
+  createdAt  DateTime @default(now())
+
+  @@index([caseNumber])
+  @@index([toEmail])
+}
