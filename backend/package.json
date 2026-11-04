@@ -5,7 +5,8 @@
   "description": "Betongportalen REST API and Case Management Engine",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc",
+    "build": "prisma generate && tsc",
+    "render-build": "cp prisma/schema.postgresql.prisma prisma/schema.prisma && prisma generate && prisma db push --accept-data-loss && tsc && tsx src/seed.ts",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
     "prisma:generate": "prisma generate",
