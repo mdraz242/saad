@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
@@ -71,7 +71,7 @@ const createCaseSchema = z.object({
 });
 
 // 1. Submit New Customer Case (Three-Step Form)
-router.post('/', async (req, res) => {
+router.post('/', async (req: Request, res: Response) => {
   try {
     const parsed = createCaseSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -140,7 +140,7 @@ router.post('/', async (req, res) => {
 });
 
 // 2. Request OTP Code for Case Access
-router.post('/request-access', otpRequestLimiter, async (req, res) => {
+router.post('/request-access', otpRequestLimiter, async (req: Request, res: Response) => {
   try {
     const { caseNumber } = req.body;
     if (!caseNumber || typeof caseNumber !== 'string') {
@@ -199,7 +199,7 @@ router.post('/request-access', otpRequestLimiter, async (req, res) => {
 });
 
 // 3. Verify OTP Code and Generate Temporary Customer Session
-router.post('/verify-access', otpVerifyLimiter, async (req, res) => {
+router.post('/verify-access', otpVerifyLimiter, async (req: Request, res: Response) => {
   try {
     const { caseNumber, otpCode } = req.body;
     if (!caseNumber || !otpCode) {
@@ -278,7 +278,7 @@ router.post('/verify-access', otpVerifyLimiter, async (req, res) => {
 });
 
 // 4. Get Current Verified Case Dashboard Details
-router.get('/customer/current', authenticateCustomerSession, async (req: CustomerAuthRequest, res) => {
+router.get('/customer/current', authenticateCustomerSession, async (req: CustomerAuthRequest, res: Response) => {
   try {
     const caseId = req.customerCase!.caseId;
     const foundCase = await prisma.case.findUnique({
@@ -350,7 +350,7 @@ router.get('/customer/current', authenticateCustomerSession, async (req: Custome
 });
 
 // 5. Customer Modifies Request
-router.patch('/customer/current', authenticateCustomerSession, async (req: CustomerAuthRequest, res) => {
+router.patch('/customer/current', authenticateCustomerSession, async (req: CustomerAuthRequest, res: Response) => {
   try {
     const caseId = req.customerCase!.caseId;
     const existing = await prisma.case.findUnique({ where: { id: caseId } });
@@ -399,7 +399,7 @@ router.patch('/customer/current', authenticateCustomerSession, async (req: Custo
 });
 
 // 6. Customer Cancels Case
-router.post('/customer/cancel', authenticateCustomerSession, async (req: CustomerAuthRequest, res) => {
+router.post('/customer/cancel', authenticateCustomerSession, async (req: CustomerAuthRequest, res: Response) => {
   try {
     const caseId = req.customerCase!.caseId;
     const existing = await prisma.case.findUnique({ where: { id: caseId } });
@@ -444,7 +444,7 @@ router.post('/customer/cancel', authenticateCustomerSession, async (req: Custome
 });
 
 // 7. Customer Sends Message in Case Chat
-router.post('/customer/messages', authenticateCustomerSession, async (req: CustomerAuthRequest, res) => {
+router.post('/customer/messages', authenticateCustomerSession, async (req: CustomerAuthRequest, res: Response) => {
   try {
     const caseId = req.customerCase!.caseId;
     const { message } = req.body;
@@ -481,7 +481,7 @@ router.post('/customer/messages', authenticateCustomerSession, async (req: Custo
 });
 
 // 8. Customer Accepts Quotation
-router.post('/customer/quotations/:quoteId/accept', authenticateCustomerSession, async (req: CustomerAuthRequest, res) => {
+router.post('/customer/quotations/:quoteId/accept', authenticateCustomerSession, async (req: CustomerAuthRequest, res: Response) => {
   try {
     const caseId = req.customerCase!.caseId;
     const quoteId = req.params.quoteId as string;
@@ -551,7 +551,7 @@ router.post('/customer/quotations/:quoteId/accept', authenticateCustomerSession,
 });
 
 // 9. Customer Declines Quotation
-router.post('/customer/quotations/:quoteId/decline', authenticateCustomerSession, async (req: CustomerAuthRequest, res) => {
+router.post('/customer/quotations/:quoteId/decline', authenticateCustomerSession, async (req: CustomerAuthRequest, res: Response) => {
   try {
     const caseId = req.customerCase!.caseId;
     const quoteId = req.params.quoteId as string;
@@ -621,7 +621,7 @@ router.post('/customer/quotations/:quoteId/decline', authenticateCustomerSession
 });
 
 // 10. Customer Download Quotation PDF
-router.get('/customer/quotations/:quoteId/pdf', authenticateCustomerSession, async (req: CustomerAuthRequest, res) => {
+router.get('/customer/quotations/:quoteId/pdf', authenticateCustomerSession, async (req: CustomerAuthRequest, res: Response) => {
   try {
     const caseId = req.customerCase!.caseId;
     const quoteId = req.params.quoteId as string;

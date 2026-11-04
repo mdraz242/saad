@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../utils/prisma.js';
 import { config, CASE_STATUSES } from '../config/index.js';
@@ -27,7 +27,7 @@ const createQuotationSchema = z.object({
 });
 
 // 1. Create Initial or New Version Quotation for a Case
-router.post('/cases/:caseId/quotations', async (req: StaffAuthRequest, res) => {
+router.post('/cases/:caseId/quotations', async (req: StaffAuthRequest, res: Response) => {
   try {
     const caseId = req.params.caseId as string;
     const parsed = createQuotationSchema.safeParse(req.body);
@@ -161,7 +161,7 @@ router.post('/cases/:caseId/quotations', async (req: StaffAuthRequest, res) => {
 });
 
 // 2. Issue a Draft Quotation to Customer
-router.post('/quotations/:id/issue', async (req: StaffAuthRequest, res) => {
+router.post('/quotations/:id/issue', async (req: StaffAuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
 
@@ -221,7 +221,7 @@ router.post('/quotations/:id/issue', async (req: StaffAuthRequest, res) => {
 });
 
 // 3. Staff Download Quotation PDF
-router.get('/quotations/:id/pdf', async (req: StaffAuthRequest, res) => {
+router.get('/quotations/:id/pdf', async (req: StaffAuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
 

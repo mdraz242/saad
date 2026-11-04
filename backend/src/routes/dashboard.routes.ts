@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { prisma } from '../utils/prisma.js';
 import {
   authenticateStaff,
@@ -9,7 +9,7 @@ const router = Router();
 router.use(authenticateStaff);
 
 // Admin Dashboard Data
-router.get('/admin', async (_req, res) => {
+router.get('/admin', async (_req: Request, res: Response) => {
   try {
     const [
       totalCases,
@@ -107,7 +107,7 @@ router.get('/admin', async (_req, res) => {
 });
 
 // Employee Dashboard Data
-router.get('/employee', async (req: StaffAuthRequest, res) => {
+router.get('/employee', async (req: StaffAuthRequest, res: Response) => {
   try {
     const staffId = req.staff!.id;
 

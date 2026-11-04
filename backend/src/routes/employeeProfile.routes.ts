@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../utils/prisma.js';
@@ -11,7 +11,7 @@ const router = Router();
 router.use(authenticateStaff);
 
 // 1. Get Logged In Staff Profile
-router.get('/profile', async (req: StaffAuthRequest, res) => {
+router.get('/profile', async (req: StaffAuthRequest, res: Response) => {
   try {
     const staffUser = await prisma.staffUser.findUnique({
       where: { id: req.staff!.id },
@@ -61,7 +61,7 @@ router.get('/profile', async (req: StaffAuthRequest, res) => {
 });
 
 // 2. Update Profile Contact Details
-router.patch('/profile', async (req: StaffAuthRequest, res) => {
+router.patch('/profile', async (req: StaffAuthRequest, res: Response) => {
   try {
     const { name, phone } = req.body;
     const updated = await prisma.staffUser.update({
@@ -92,7 +92,7 @@ const changePasswordSchema = z.object({
 });
 
 // 3. Change Password
-router.post('/change-password', async (req: StaffAuthRequest, res) => {
+router.post('/change-password', async (req: StaffAuthRequest, res: Response) => {
   try {
     const parsed = changePasswordSchema.safeParse(req.body);
     if (!parsed.success) {

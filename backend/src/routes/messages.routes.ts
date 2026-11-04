@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { prisma } from '../utils/prisma.js';
 import { authenticateStaff, StaffAuthRequest } from '../middleware/auth.middleware.js';
 import { EmailService } from '../services/email.service.js';
@@ -7,7 +7,7 @@ const router = Router();
 router.use(authenticateStaff);
 
 // 1. Central Messages Inbox across all cases
-router.get('/messages/inbox', async (req, res) => {
+router.get('/messages/inbox', async (req: Request, res: Response) => {
   try {
     const { unreadOnly, search, caseId } = req.query;
 
@@ -66,7 +66,7 @@ router.get('/messages/inbox', async (req, res) => {
 });
 
 // 2. Get messages for a specific case
-router.get('/cases/:id/messages', async (req, res) => {
+router.get('/cases/:id/messages', async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const messages = await prisma.caseMessage.findMany({
@@ -95,7 +95,7 @@ router.get('/cases/:id/messages', async (req, res) => {
 });
 
 // 3. Mark single message as read
-router.patch('/messages/:id/read', async (req, res) => {
+router.patch('/messages/:id/read', async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const updated = await prisma.caseMessage.update({
@@ -110,7 +110,7 @@ router.patch('/messages/:id/read', async (req, res) => {
 });
 
 // 4. Staff sends message in case
-router.post('/cases/:id/messages', async (req: StaffAuthRequest, res) => {
+router.post('/cases/:id/messages', async (req: StaffAuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const { message } = req.body;

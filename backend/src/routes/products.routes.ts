@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../utils/prisma.js';
 import {
@@ -10,7 +10,7 @@ import {
 const router = Router();
 
 // Public: Get Active Products for Customer Form
-router.get('/products', async (_req, res) => {
+router.get('/products', async (_req: Request, res: Response) => {
   try {
     const products = await prisma.product.findMany({
       where: { isActive: true },
@@ -24,7 +24,7 @@ router.get('/products', async (_req, res) => {
 });
 
 // Admin: Get All Products (Active and Inactive)
-router.get('/admin/products', authenticateStaff, async (_req, res) => {
+router.get('/admin/products', authenticateStaff, async (_req: Request, res: Response) => {
   try {
     const products = await prisma.product.findMany({
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
@@ -51,7 +51,7 @@ router.post(
   '/admin/products',
   authenticateStaff,
   requireAdministrator,
-  async (req: StaffAuthRequest, res) => {
+  async (req: StaffAuthRequest, res: Response) => {
     try {
       const parsed = productSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -86,7 +86,7 @@ router.patch(
   '/admin/products/:id',
   authenticateStaff,
   requireAdministrator,
-  async (req: StaffAuthRequest, res) => {
+  async (req: StaffAuthRequest, res: Response) => {
     try {
       const id = req.params.id as string;
       const parsed = productSchema.partial().safeParse(req.body);
@@ -123,7 +123,7 @@ router.delete(
   '/admin/products/:id',
   authenticateStaff,
   requireAdministrator,
-  async (req: StaffAuthRequest, res) => {
+  async (req: StaffAuthRequest, res: Response) => {
     try {
       const id = req.params.id as string;
       const product = await prisma.product.findUnique({ where: { id } });

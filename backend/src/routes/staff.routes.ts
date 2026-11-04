@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../utils/prisma.js';
@@ -39,7 +39,7 @@ export const SYSTEM_PERMISSIONS = [
 ];
 
 // 1. Get Permissions Matrix
-router.get('/permissions/matrix', async (_req, res) => {
+router.get('/permissions/matrix', async (_req: Request, res: Response) => {
   try {
     const staff = await prisma.staffUser.findMany({
       select: {
@@ -79,7 +79,7 @@ router.get('/permissions/matrix', async (_req, res) => {
 });
 
 // 2. List Staff Accounts
-router.get('/', async (_req, res) => {
+router.get('/', async (_req: Request, res: Response) => {
   try {
     const staff = await prisma.staffUser.findMany({
       select: {
@@ -132,7 +132,7 @@ const createStaffSchema = z.object({
 });
 
 // 3. Create Staff Account
-router.post('/', async (req: StaffAuthRequest, res) => {
+router.post('/', async (req: StaffAuthRequest, res: Response) => {
   try {
     const parsed = createStaffSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -203,7 +203,7 @@ router.post('/', async (req: StaffAuthRequest, res) => {
 });
 
 // 4. Update Staff Permissions
-router.patch('/:id/permissions', async (req: StaffAuthRequest, res) => {
+router.patch('/:id/permissions', async (req: StaffAuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const { permissions } = req.body;
@@ -250,7 +250,7 @@ router.patch('/:id/permissions', async (req: StaffAuthRequest, res) => {
 });
 
 // 5. Edit Staff Account
-router.patch('/:id', async (req: StaffAuthRequest, res) => {
+router.patch('/:id', async (req: StaffAuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const { name, phone, role, isActive, permissions } = req.body;
@@ -314,7 +314,7 @@ router.patch('/:id', async (req: StaffAuthRequest, res) => {
 });
 
 // 6. Reset Staff Password
-router.post('/:id/reset-password', async (req: StaffAuthRequest, res) => {
+router.post('/:id/reset-password', async (req: StaffAuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const { newPassword } = req.body;

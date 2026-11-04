@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../utils/prisma.js';
 import {
@@ -18,7 +18,7 @@ async function generateProjectId(): Promise<string> {
 }
 
 // 1. List Projects with search and filters
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const { status, customerId, search } = req.query;
 
@@ -57,7 +57,7 @@ router.get('/', async (req, res) => {
 });
 
 // 2. Get Project Details
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const project = await prisma.project.findFirst({
@@ -133,7 +133,7 @@ const createProjectSchema = z.object({
 });
 
 // 3. Create Project Manually
-router.post('/', async (req: StaffAuthRequest, res) => {
+router.post('/', async (req: StaffAuthRequest, res: Response) => {
   try {
     const parsed = createProjectSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -208,7 +208,7 @@ router.post('/', async (req: StaffAuthRequest, res) => {
 });
 
 // 4. Convert Case to Project
-router.post('/convert-case/:caseId', async (req: StaffAuthRequest, res) => {
+router.post('/convert-case/:caseId', async (req: StaffAuthRequest, res: Response) => {
   try {
     const caseId = req.params.caseId as string;
     const foundCase = await prisma.case.findUnique({
@@ -332,7 +332,7 @@ router.post('/convert-case/:caseId', async (req: StaffAuthRequest, res) => {
 });
 
 // 5. Update Project Details & Progress
-router.patch('/:id', async (req: StaffAuthRequest, res) => {
+router.patch('/:id', async (req: StaffAuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const {
@@ -417,7 +417,7 @@ router.patch('/:id', async (req: StaffAuthRequest, res) => {
 });
 
 // 6. Add Material to Project
-router.post('/:id/materials', async (req: StaffAuthRequest, res) => {
+router.post('/:id/materials', async (req: StaffAuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const {
@@ -459,7 +459,7 @@ router.post('/:id/materials', async (req: StaffAuthRequest, res) => {
 });
 
 // 7. Delete Material from Project
-router.delete('/:id/materials/:materialId', async (req: StaffAuthRequest, res) => {
+router.delete('/:id/materials/:materialId', async (req: StaffAuthRequest, res: Response) => {
   try {
     const { materialId } = req.params;
     await prisma.projectMaterial.delete({

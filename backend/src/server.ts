@@ -57,7 +57,7 @@ app.use(cors({
 app.use(express.json());
 
 // Request logging in dev
-app.use((req, _res, next) => {
+app.use((req: express.Request, _res: express.Response, next: express.NextFunction) => {
   if (config.nodeEnv === 'development') {
     console.log(`[${req.method}] ${req.url}`);
   }
@@ -65,7 +65,7 @@ app.use((req, _res, next) => {
 });
 
 // Health check
-app.get('/api/health', (_req, res) => {
+app.get('/api/health', (_req: express.Request, res: express.Response) => {
   res.json({
     status: 'ok',
     service: 'Betongportalen API',

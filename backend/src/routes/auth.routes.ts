@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
@@ -14,7 +14,7 @@ const loginSchema = z.object({
 });
 
 // Staff Login
-router.post('/login', async (req, res) => {
+router.post('/login', async (req: Request, res: Response) => {
   try {
     const parsed = loginSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -70,12 +70,12 @@ router.post('/login', async (req, res) => {
 });
 
 // Staff current user check
-router.get('/me', authenticateStaff, async (req: StaffAuthRequest, res) => {
+router.get('/me', authenticateStaff, async (req: StaffAuthRequest, res: Response) => {
   res.json({ staff: req.staff });
 });
 
 // Staff Logout
-router.post('/logout', authenticateStaff, async (req: StaffAuthRequest, res) => {
+router.post('/logout', authenticateStaff, async (req: StaffAuthRequest, res: Response) => {
   if (req.staff) {
     await prisma.auditLog.create({
       data: {

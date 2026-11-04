@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { prisma } from '../utils/prisma.js';
 import {
   authenticateStaff,
@@ -9,7 +9,7 @@ import {
 const router = Router();
 
 // Public: Get Basic Company Info
-router.get('/settings', async (_req, res) => {
+router.get('/settings', async (_req: Request, res: Response) => {
   try {
     const settings = await prisma.applicationSettings.findUnique({
       where: { id: 'default-settings' },
@@ -34,7 +34,7 @@ router.get('/settings', async (_req, res) => {
 });
 
 // Admin: Get Full Settings
-router.get('/admin/settings', authenticateStaff, async (_req, res) => {
+router.get('/admin/settings', authenticateStaff, async (_req: Request, res: Response) => {
   try {
     const settings = await prisma.applicationSettings.findUnique({
       where: { id: 'default-settings' },
@@ -51,7 +51,7 @@ router.patch(
   '/admin/settings',
   authenticateStaff,
   requireAdministrator,
-  async (req: StaffAuthRequest, res) => {
+  async (req: StaffAuthRequest, res: Response) => {
     try {
       const {
         companyName,
@@ -120,7 +120,7 @@ router.patch(
 );
 
 // Admin: Email Inspector
-router.get('/admin/email-logs', authenticateStaff, async (_req, res) => {
+router.get('/admin/email-logs', authenticateStaff, async (_req: Request, res: Response) => {
   try {
     const emails = await prisma.notificationEmailLog.findMany({
       orderBy: { createdAt: 'desc' },

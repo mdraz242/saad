@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { prisma } from '../utils/prisma.js';
 import {
   authenticateStaff,
@@ -10,7 +10,7 @@ router.use(authenticateStaff);
 router.use(requireAdministrator);
 
 // List Audit Logs
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const { action, staffId, entityType, search } = req.query;
 

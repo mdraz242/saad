@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../utils/prisma.js';
 import { config, CASE_STATUSES, CASE_STATUS_DESCRIPTIONS } from '../config/index.js';
@@ -10,7 +10,7 @@ const router = Router();
 router.use(authenticateStaff);
 
 // 1. List Cases with Search, Filter, Sort, Pagination
-router.get('/', async (req: StaffAuthRequest, res) => {
+router.get('/', async (req: StaffAuthRequest, res: Response) => {
   try {
     const {
       search,
@@ -103,7 +103,7 @@ const manualCaseSchema = z.object({
   comments: z.string().optional(),
 });
 
-router.post('/', async (req: StaffAuthRequest, res) => {
+router.post('/', async (req: StaffAuthRequest, res: Response) => {
   try {
     const parsed = manualCaseSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -171,7 +171,7 @@ router.post('/', async (req: StaffAuthRequest, res) => {
 });
 
 // 3. Get Single Case Details
-router.get('/:id', async (req: StaffAuthRequest, res) => {
+router.get('/:id', async (req: StaffAuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const foundCase = await prisma.case.findUnique({
@@ -216,7 +216,7 @@ router.get('/:id', async (req: StaffAuthRequest, res) => {
 });
 
 // 4. Update Request Information (Edit request)
-router.patch('/:id', async (req: StaffAuthRequest, res) => {
+router.patch('/:id', async (req: StaffAuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const existing = await prisma.case.findUnique({ where: { id } });
@@ -275,7 +275,7 @@ router.patch('/:id', async (req: StaffAuthRequest, res) => {
 });
 
 // 5. Accept Request for Processing (NEW -> UNDER_REVIEW)
-router.post('/:id/accept-processing', async (req: StaffAuthRequest, res) => {
+router.post('/:id/accept-processing', async (req: StaffAuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const existing = await prisma.case.findUnique({ where: { id } });
@@ -316,7 +316,7 @@ router.post('/:id/accept-processing', async (req: StaffAuthRequest, res) => {
 });
 
 // 6. Decline Initial Request (with customer-visible explanation)
-router.post('/:id/decline-request', async (req: StaffAuthRequest, res) => {
+router.post('/:id/decline-request', async (req: StaffAuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const { reason } = req.body;
@@ -365,7 +365,7 @@ router.post('/:id/decline-request', async (req: StaffAuthRequest, res) => {
 });
 
 // 7. Request Additional Information from Customer
-router.post('/:id/request-info', async (req: StaffAuthRequest, res) => {
+router.post('/:id/request-info', async (req: StaffAuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const { message } = req.body;
@@ -416,7 +416,7 @@ router.post('/:id/request-info', async (req: StaffAuthRequest, res) => {
 });
 
 // 8. Close Case
-router.post('/:id/close', async (req: StaffAuthRequest, res) => {
+router.post('/:id/close', async (req: StaffAuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const { reason } = req.body;
@@ -454,7 +454,7 @@ router.post('/:id/close', async (req: StaffAuthRequest, res) => {
 });
 
 // 9. Update Status Directly
-router.patch('/:id/status', async (req: StaffAuthRequest, res) => {
+router.patch('/:id/status', async (req: StaffAuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const { status, notes } = req.body;

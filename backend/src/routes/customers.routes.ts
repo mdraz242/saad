@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../utils/prisma.js';
 import {
@@ -10,7 +10,7 @@ const router = Router();
 router.use(authenticateStaff);
 
 // 1. List Customers with search & filter
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const { customerType, search } = req.query;
 
@@ -71,7 +71,7 @@ router.get('/', async (req, res) => {
 });
 
 // 2. Get Customer Profile with linked records
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const customer = await prisma.customer.findUnique({
@@ -133,7 +133,7 @@ const customerSchema = z.object({
 });
 
 // 3. Create Customer
-router.post('/', async (req: StaffAuthRequest, res) => {
+router.post('/', async (req: StaffAuthRequest, res: Response) => {
   try {
     const parsed = customerSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -182,7 +182,7 @@ router.post('/', async (req: StaffAuthRequest, res) => {
 });
 
 // 4. Update Customer
-router.patch('/:id', async (req: StaffAuthRequest, res) => {
+router.patch('/:id', async (req: StaffAuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const { name, customerType, companyName, email, phone, address } = req.body;

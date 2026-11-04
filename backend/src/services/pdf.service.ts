@@ -15,9 +15,9 @@ export class PdfService {
       const doc = new PDFDocument({ margin: 40, size: 'A4' });
       const buffers: Buffer[] = [];
 
-      doc.on('data', (data) => buffers.push(data));
+      doc.on('data', (data: Buffer) => buffers.push(data));
       doc.on('end', () => resolve(Buffer.concat(buffers)));
-      doc.on('error', (err) => reject(err));
+      doc.on('error', (err: Error) => reject(err));
 
       const primaryColor = '#1a382b';
       const greenAccent = '#22c55e';
