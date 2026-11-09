@@ -1,5 +1,27 @@
 import { prisma } from '../utils/prisma.js';
 import { config } from '../config/index.js';
+import nodemailer, { type Transporter } from 'nodemailer';
+
+let transporter: Transporter | null = null;
+
+if (config.smtp.host && config.smtp.user) {
+  try {
+    transporter = nodemailer.createTransport({
+      host: config.smtp.host,
+      port: config.smtp.port,
+      secure: config.smtp.port === 465,
+      auth: {
+        user: config.smtp.user,
+        pass: config.smtp.pass,
+      },
+    });
+    console.log(`[SMTP] Initialized email transporter for host: ${config.smtp.host}:${config.smtp.port}`);
+  } catch (err) {
+    console.error('[SMTP] Failed to initialize nodemailer transporter:', err);
+  }
+} else {
+  console.log('[SMTP] No SMTP credentials configured. Outgoing emails will be logged in database & console.');
+}
 
 interface EmailPayload {
   to: string;
@@ -78,8 +100,23 @@ export class EmailService {
 
   public static async sendEmail(payload: EmailPayload): Promise<boolean> {
     const html = this.renderTemplate(payload);
+    let sendStatus = 'SIMULATED_NO_SMTP';
 
     try {
+      if (transporter) {
+        await transporter.sendMail({
+          from: config.emailFrom,
+          to: payload.to,
+          subject: payload.subject,
+          html,
+          text: `${payload.heading}\n\n${payload.message.replace(/<[^>]+>/g, '')}`,
+        });
+        sendStatus = 'SENT';
+        console.log(`[SMTP EMAIL SENT] To: ${payload.to} | Subject: "${payload.subject}" | Case: ${payload.caseNumber || 'N/A'}`);
+      } else {
+        console.log(`[SMTP SIMULATED] To: ${payload.to} | Subject: "${payload.subject}" | Case: ${payload.caseNumber || 'N/A'}`);
+      }
+
       // 1. Log to database for inspection, test verification and audit
       await prisma.notificationEmailLog.create({
         data: {
@@ -88,14 +125,27 @@ export class EmailService {
           template: payload.template,
           bodyText: `${payload.heading}\n\n${payload.message}`,
           caseNumber: payload.caseNumber || null,
-          status: 'SENT',
+          status: sendStatus,
         },
       });
 
-      console.log(`[EMAIL DISPATCHED] To: ${payload.to} | Subject: "${payload.subject}" | Case: ${payload.caseNumber || 'N/A'}`);
       return true;
     } catch (err) {
-      console.error('[EMAIL ERROR] Failed to record/send email:', err);
+      console.error('[EMAIL ERROR] Failed to send email via SMTP:', err);
+      try {
+        await prisma.notificationEmailLog.create({
+          data: {
+            toEmail: payload.to,
+            subject: payload.subject,
+            template: payload.template,
+            bodyText: `${payload.heading}\n\n${payload.message}`,
+            caseNumber: payload.caseNumber || null,
+            status: 'FAILED',
+          },
+        });
+      } catch (dbErr) {
+        // ignore
+      }
       return false;
     }
   }

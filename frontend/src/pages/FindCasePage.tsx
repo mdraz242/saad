@@ -11,6 +11,7 @@ export const FindCasePage: React.FC = () => {
   const [caseNumber, setCaseNumber] = useState(searchParams.get('caseNumber') || '');
   const [otpCode, setOtpCode] = useState('');
   const [maskedEmail, setMaskedEmail] = useState<string | null>(null);
+  const [previewOtp, setPreviewOtp] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -39,6 +40,11 @@ export const FindCasePage: React.FC = () => {
     try {
       const res = await api.requestAccess(caseNumber.trim().toUpperCase());
       setMaskedEmail(res.maskedEmail);
+      if (res.previewOtp) {
+        setPreviewOtp(res.previewOtp);
+      } else {
+        setPreviewOtp(null);
+      }
       setInfoMsg(`A single-use 6-digit code has been dispatched to ${res.maskedEmail}.`);
       setStep('ENTER_OTP');
     } catch (err: any) {
@@ -155,6 +161,24 @@ export const FindCasePage: React.FC = () => {
           {/* STEP 2: ENTER OTP */}
           {step === 'ENTER_OTP' && (
             <form onSubmit={handleVerifyOtp} className="space-y-4">
+              {previewOtp && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-900 flex items-center justify-between">
+                  <div>
+                    <span className="font-semibold text-emerald-800">Demo/Preview code: </span>
+                    <span className="font-mono font-bold tracking-widest text-brand-nordic text-sm ml-1">
+                      {previewOtp}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOtpCode(previewOtp)}
+                    className="text-xs font-semibold text-brand-nordic underline hover:text-emerald-950 cursor-pointer"
+                  >
+                    Click to autofill
+                  </button>
+                </div>
+              )}
+
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wider text-slate-700">

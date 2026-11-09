@@ -185,11 +185,15 @@ router.post('/request-access', otpRequestLimiter, async (req: Request, res: Resp
     // Send email with OTP code
     await EmailService.sendOtpCode(foundCase.customerEmail, foundCase.caseNumber, otpCode);
 
+    // If SMTP is not configured or in development/demo mode, provide previewOtp so user can verify immediately
+    const isSmtpConfigured = Boolean(config.smtp.host && config.smtp.user);
+
     res.json({
       success: true,
       caseNumber: foundCase.caseNumber,
       maskedEmail: maskEmail(foundCase.customerEmail),
       message: `A single-use verification code has been sent to ${maskEmail(foundCase.customerEmail)}.`,
+      previewOtp: !isSmtpConfigured ? otpCode : undefined,
     });
   } catch (err) {
     console.error('Request access error:', err);
