@@ -41,10 +41,10 @@ function maskEmail(email: string): string {
 }
 
 const createCaseSchema = z.object({
-  customerType: z.enum(['INDIVIDUAL', 'BUSINESS']),
-  customerName: z.string().min(2, 'Name is required'),
+  customerType: z.enum(['INDIVIDUAL', 'BUSINESS']).default('INDIVIDUAL'),
+  customerName: z.string().min(1, 'Name is required'),
   customerEmail: z.string().email('Valid email is required'),
-  customerPhone: z.string().min(6, 'Phone number is required'),
+  customerPhone: z.string().optional().default(''),
   isQuoteComparison: z.boolean().default(false),
   existingQuoteDetails: z
     .object({
@@ -56,18 +56,17 @@ const createCaseSchema = z.object({
     })
     .optional(),
   productId: z.string().optional().nullable(),
-  productName: z.string().min(2, 'Product name is required'),
-  customRequirements: z.string().optional(),
+  productName: z.string().min(1, 'Product name is required'),
+  customRequirements: z.string().optional().nullable(),
   quantity: z.number().positive('Quantity must be greater than 0'),
-  unit: z.string().min(1, 'Unit is required'),
-  deliveryAddress: z.string().min(5, 'Delivery address is required'),
+  unit: z.string().optional().default('m³'),
+  deliveryAddress: z.string().optional().default(''),
   desiredDeliveryDate: z.string().optional().nullable(),
-  deliveryRequirements: z.string().optional(),
-  technicalRequirements: z.string().optional(),
-  comments: z.string().optional(),
-  privacyAccepted: z.literal(true, {
-    errorMap: () => ({ message: 'You must accept the privacy notice' }),
-  }),
+  deliveryRequirements: z.string().optional().nullable(),
+  technicalRequirements: z.string().optional().nullable(),
+  comments: z.string().optional().nullable(),
+  deliveryMethod: z.string().optional().nullable(),
+  privacyAccepted: z.boolean().optional().default(true),
 });
 
 // 1. Submit New Customer Case (Three-Step Form)
@@ -94,15 +93,15 @@ router.post('/', async (req: Request, res: Response) => {
         customerType: data.customerType,
         customerName: data.customerName.trim(),
         customerEmail: data.customerEmail.toLowerCase().trim(),
-        customerPhone: data.customerPhone.trim(),
+        customerPhone: (data.customerPhone && data.customerPhone.trim()) ? data.customerPhone.trim() : 'Not provided',
         status: CASE_STATUSES.NEW,
         isQuoteComparison: data.isQuoteComparison,
         existingQuoteDetails: data.existingQuoteDetails ? JSON.stringify(data.existingQuoteDetails) : null,
         quantity: data.quantity,
-        unit: data.unit,
-        deliveryAddress: data.deliveryAddress.trim(),
+        unit: data.unit || 'm³',
+        deliveryAddress: (data.deliveryAddress && data.deliveryAddress.trim()) ? data.deliveryAddress.trim() : (data.deliveryMethod === 'PICKUP' ? 'Self-pickup / Download yourself' : (data.comments?.slice(0, 100) || 'Delivery address to be confirmed')),
         desiredDeliveryDate: desiredDate,
-        deliveryRequirements: data.deliveryRequirements?.trim() || null,
+        deliveryRequirements: data.deliveryRequirements?.trim() || (data.deliveryMethod ? `Method: ${data.deliveryMethod}` : null),
         technicalRequirements: data.technicalRequirements?.trim() || null,
         comments: data.comments?.trim() || null,
         privacyAccepted: true,

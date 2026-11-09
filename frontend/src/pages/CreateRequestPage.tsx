@@ -1,29 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Check,
   ArrowRight,
   ArrowLeft,
   Building2,
   User,
-  Scale,
   Calendar,
-  MapPin,
-  ClipboardCheck,
+  Truck,
+  Package,
   AlertCircle,
   Copy,
   FolderKanban,
-  Send,
-  Layers,
 } from 'lucide-react';
-import { api, customerSession } from '../services/api';
-import { Product } from '../types';
+import { api } from '../services/api';
 
 export const CreateRequestPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -34,98 +27,46 @@ export const CreateRequestPage: React.FC = () => {
   } | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Form State
+  // Form State matching screenshots
   const [formData, setFormData] = useState({
-    // Step A
+    // Step 1: Customer type
     customerType: 'INDIVIDUAL' as 'INDIVIDUAL' | 'BUSINESS',
-    isQuoteComparison: searchParams.get('compare') === 'true',
-    selectedProductId: '',
+
+    // Step 2: Product & day
     productName: '',
-    customProductText: '',
-    existingProduct: '',
-    quotedQuantity: '',
-    currentQuotedPrice: '',
-    terms: '',
-    additionalDescription: '',
-
-    // Step B
-    quantity: 12,
+    helpMeChoose: false,
+    projectDescription: '',
+    quantity: '5',
     unit: 'm³',
-    deliveryAddress: '',
     desiredDeliveryDate: '',
-    deliveryRequirements: '',
-    technicalRequirements: '',
-    comments: '',
+    deliveryMethod: 'DELIVERY' as 'DELIVERY' | 'PICKUP',
 
-    // Step C
+    // Step 3: Contact & review
     customerName: '',
     customerEmail: '',
-    customerPhone: '',
-    privacyAccepted: false,
+    otherInfo: '',
   });
 
-  // Fetch admin-managed active products from backend API
-  useEffect(() => {
-    api
-      .getPublicProducts()
-      .then((res) => {
-        if (res.products && res.products.length > 0) {
-          setProducts(res.products);
-          // Default to first product if none selected
-          setFormData((prev) => ({
-            ...prev,
-            selectedProductId: res.products[0].id,
-            productName: res.products[0].name,
-            unit: res.products[0].defaultUnit || 'm³',
-          }));
-        }
-      })
-      .catch((err) => console.error('Error fetching products:', err))
-      .finally(() => setLoadingProducts(false));
-  }, []);
-
-  const handleProductChange = (productId: string) => {
-    if (productId === 'custom') {
-      setFormData((prev) => ({
-        ...prev,
-        selectedProductId: 'custom',
-        productName: prev.customProductText || 'Custom Concrete / Material',
-      }));
-    } else {
-      const prod = products.find((p) => p.id === productId);
-      if (prod) {
-        setFormData((prev) => ({
-          ...prev,
-          selectedProductId: prod.id,
-          productName: prod.name,
-          unit: prod.defaultUnit || prev.unit,
-        }));
-      }
-    }
-  };
-
   const validateStep1 = () => {
-    if (!formData.productName.trim()) {
-      setErrorMsg('Please select or specify a concrete product.');
-      return false;
-    }
-    if (formData.isQuoteComparison) {
-      if (!formData.currentQuotedPrice.trim()) {
-        setErrorMsg('Please specify the current price quoted to you for comparison.');
-        return false;
-      }
-    }
     setErrorMsg(null);
     return true;
   };
 
   const validateStep2 = () => {
-    if (!formData.quantity || formData.quantity <= 0) {
-      setErrorMsg('Quantity must be greater than 0.');
+    if (!formData.productName.trim() && !formData.helpMeChoose) {
+      setErrorMsg('Please specify what you would like to order or select "I don\'t know – help me choose".');
       return false;
     }
-    if (!formData.deliveryAddress.trim() || formData.deliveryAddress.trim().length < 5) {
-      setErrorMsg('Please enter a valid project delivery address (at least 5 characters).');
+    if (formData.helpMeChoose && !formData.projectDescription.trim()) {
+      setErrorMsg('Please describe what you are going to build or cast.');
+      return false;
+    }
+    if (!formData.quantity || parseFloat(formData.quantity) <= 0) {
+      setErrorMsg('Please enter a valid quantity.');
+      return false;
+    }
+    if (!formData.desiredDeliveryDate) {
+      setErrorMsg('Please select a desired delivery date.');
       return false;
     }
     setErrorMsg(null);
@@ -134,19 +75,11 @@ export const CreateRequestPage: React.FC = () => {
 
   const validateStep3 = () => {
     if (!formData.customerName.trim() || formData.customerName.trim().length < 2) {
-      setErrorMsg('Please enter your full name or company name.');
+      setErrorMsg('Please enter your full name.');
       return false;
     }
     if (!formData.customerEmail.trim() || !formData.customerEmail.includes('@')) {
       setErrorMsg('Please enter a valid email address.');
-      return false;
-    }
-    if (!formData.customerPhone.trim() || formData.customerPhone.trim().length < 6) {
-      setErrorMsg('Please enter a valid telephone number.');
-      return false;
-    }
-    if (!formData.privacyAccepted) {
-      setErrorMsg('You must accept the privacy policy to submit.');
       return false;
     }
     setErrorMsg(null);
@@ -178,34 +111,24 @@ export const CreateRequestPage: React.FC = () => {
     setErrorMsg(null);
 
     try {
+      const chosenProduct = formData.productName.trim() || (formData.helpMeChoose ? 'Bespoke recommendation needed' : 'Concrete');
       const payload = {
         customerType: formData.customerType,
-        customerName: formData.customerName,
-        customerEmail: formData.customerEmail,
-        customerPhone: formData.customerPhone,
-        isQuoteComparison: formData.isQuoteComparison,
-        existingQuoteDetails: formData.isQuoteComparison
-          ? {
-              existingProduct: formData.existingProduct || formData.productName,
-              quotedQuantity: formData.quotedQuantity || `${formData.quantity} ${formData.unit}`,
-              currentQuotedPrice: formData.currentQuotedPrice,
-              terms: formData.terms,
-              additionalDescription: formData.additionalDescription,
-            }
-          : undefined,
-        productId: formData.selectedProductId === 'custom' ? null : formData.selectedProductId || null,
-        productName:
-          formData.selectedProductId === 'custom' && formData.customProductText
-            ? formData.customProductText
-            : formData.productName,
-        customRequirements: formData.technicalRequirements,
-        quantity: Number(formData.quantity),
+        customerName: formData.customerName.trim(),
+        customerEmail: formData.customerEmail.trim().toLowerCase(),
+        customerPhone: 'Not provided',
+        productName: chosenProduct,
+        customRequirements: formData.helpMeChoose ? formData.projectDescription.trim() : undefined,
+        quantity: parseFloat(formData.quantity) || 1,
         unit: formData.unit,
-        deliveryAddress: formData.deliveryAddress,
-        desiredDeliveryDate: formData.desiredDeliveryDate ? formData.desiredDeliveryDate : null,
-        deliveryRequirements: formData.deliveryRequirements,
-        technicalRequirements: formData.technicalRequirements,
-        comments: formData.comments,
+        deliveryAddress: formData.deliveryMethod === 'PICKUP' 
+          ? 'Self-pickup / Download yourself' 
+          : (formData.otherInfo.trim() || 'Address to be confirmed with quote'),
+        desiredDeliveryDate: formData.desiredDeliveryDate || null,
+        deliveryRequirements: `Method: ${formData.deliveryMethod === 'PICKUP' ? 'Download yourself (Pickup)' : 'Exit (Delivery to site)'}`,
+        technicalRequirements: formData.helpMeChoose ? `Project details: ${formData.projectDescription.trim()}` : undefined,
+        comments: formData.otherInfo.trim() || null,
+        deliveryMethod: formData.deliveryMethod,
         privacyAccepted: true,
       };
 
@@ -216,7 +139,7 @@ export const CreateRequestPage: React.FC = () => {
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to submit request. Please try again.');
+      setErrorMsg(err.message || 'Failed to submit inquiry. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -233,35 +156,34 @@ export const CreateRequestPage: React.FC = () => {
   // SUCCESS CONFIRMATION VIEW
   if (submittedCase) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-16 sm:py-24">
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 sm:p-10 text-center">
-          <div className="w-14 h-14 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Check className="h-8 w-8" />
+      <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 bg-slate-50">
+        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-8 sm:p-12 text-center max-w-lg w-full">
+          <div className="w-16 h-16 bg-[#ede9fe] text-[#1e1b8a] rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+            <Check className="h-8 w-8 stroke-[2.5]" />
           </div>
 
-          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
-            Request Successfully Submitted
+          <span className="text-xs font-bold uppercase tracking-wider text-[#1e1b8a]">
+            YOUR FREE INQUIRY
           </span>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">
-            Thank you, {formData.customerName}!
+          <h1 className="text-3xl font-extrabold text-slate-900 mt-2">
+            Inquiry registered!
           </h1>
-          <p className="mt-3 text-sm text-slate-600 leading-relaxed max-w-lg mx-auto">
-            Your inquiry has been registered in our database. Our concrete specialists are already evaluating supplier capacities to negotiate the best price for you.
+          <p className="mt-3 text-sm text-slate-600 leading-relaxed">
+            Thank you, <strong>{formData.customerName}</strong>. We are comparing prices from regional concrete plants to get you the best offer.
           </p>
 
-          {/* Unpredictable Case Reference Box */}
-          <div className="mt-8 p-6 rounded-lg bg-surface-bg border border-slate-200 inline-block w-full max-w-md text-left">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block mb-1">
+          <div className="mt-6 p-5 rounded-2xl bg-[#f8f7ff] border border-indigo-100 text-left">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
               Your Unique Case Reference
             </span>
             <div className="flex items-center justify-between gap-4">
-              <span className="text-2xl sm:text-3xl font-mono font-bold text-brand-nordic tracking-wider">
+              <span className="text-2xl font-mono font-bold text-[#1e1b8a] tracking-wider">
                 {submittedCase.caseNumber}
               </span>
               <button
                 type="button"
                 onClick={handleCopyCaseNumber}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-300 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 transition"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-xs"
               >
                 {copied ? (
                   <>
@@ -276,35 +198,24 @@ export const CreateRequestPage: React.FC = () => {
                 )}
               </button>
             </div>
-            <p className="text-xs text-slate-500 mt-3 border-t border-slate-200/80 pt-2">
-              We also sent a confirmation email to <strong>{formData.customerEmail}</strong>.
+            <p className="text-xs text-slate-500 mt-2 border-t border-slate-200/60 pt-2">
+              Confirmation sent to <strong>{formData.customerEmail}</strong>.
             </p>
-          </div>
-
-          {/* Next Steps Guidance */}
-          <div className="mt-8 text-left max-w-md mx-auto space-y-3 bg-emerald-50/60 p-4 rounded-lg border border-emerald-100 text-xs text-slate-700">
-            <div className="font-semibold text-emerald-900">How to access your case:</div>
-            <ol className="list-decimal pl-4 space-y-1 text-slate-600">
-              <li>Save your case reference: <span className="font-mono font-semibold">{submittedCase.caseNumber}</span></li>
-              <li>Go to "Find your case" at any time.</li>
-              <li>Enter a temporary 6-digit verification code sent to your email.</li>
-              <li>Chat with staff, review itemized quotations, or accept your offer.</li>
-            </ol>
           </div>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               to={`/find-case?caseNumber=${submittedCase.caseNumber}`}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-brand-nordic text-white text-sm font-semibold hover:bg-brand-nordicDark transition"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-[#1e1b8a] text-white text-sm font-semibold hover:bg-[#151263] transition shadow-md"
             >
               <FolderKanban className="h-4 w-4" />
-              <span>Go to Case Verification</span>
+              <span>Track your case</span>
             </Link>
             <Link
               to="/"
-              className="w-full sm:w-auto px-5 py-3 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-full border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
             >
-              Back to Homepage
+              Homepage
             </Link>
           </div>
         </div>
@@ -313,592 +224,486 @@ export const CreateRequestPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-surface-bg py-12 sm:py-16">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
-            Request Quotation
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">
-            Create an inquiry
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-600 mt-2">
-            No obligation. We source from verified local concrete plants and negotiate the best possible rate.
-          </p>
+    <div className="min-h-screen bg-[#fafafc] py-8 sm:py-14 px-4 sm:px-6">
+      <div className="max-w-xl mx-auto bg-white rounded-3xl border border-slate-100 shadow-xs p-6 sm:p-10">
+        
+        {/* Top Header: Badge + Step Counter */}
+        <div className="flex items-start justify-between mb-2">
+          <div>
+            <span className="text-xs font-extrabold uppercase tracking-wider text-[#1e1b8a]">
+              YOUR FREE INQUIRY
+            </span>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mt-1">
+              {currentStep === 1 && 'Who orders?'}
+              {currentStep === 2 && 'What do you need?'}
+              {currentStep === 3 && 'Who will receive the price quote?'}
+            </h1>
+            <p className="text-sm sm:text-base text-slate-600 mt-1">
+              {currentStep === 1 && 'Choose what suits you.'}
+              {currentStep === 2 && 'Write your product and select the desired day.'}
+              {currentStep === 3 && 'A few final tasks, then you\'re done.'}
+            </p>
+          </div>
+
+          <div className="text-right pl-4 flex-shrink-0">
+            <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-none">
+              0{currentStep}
+            </span>
+            <span className="text-xs font-bold text-slate-400 block mt-0.5">/ 03</span>
+          </div>
         </div>
 
-        {/* 3-Step Progress Indicator */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between relative">
-            {/* Step 1 Indicator */}
-            <div className="flex items-center gap-2 z-10 bg-surface-bg pr-2">
+        {/* Stepper Progress Bar */}
+        <div className="mt-6 mb-8 border-b border-slate-200">
+          <div className="flex items-center gap-6 sm:gap-8 pb-3">
+            {/* Step 1 */}
+            <div
+              onClick={() => currentStep > 1 && setCurrentStep(1)}
+              className={`flex items-center gap-2 relative cursor-pointer pb-2 -mb-3 transition ${
+                currentStep === 1
+                  ? 'border-b-2 border-[#1e1b8a] text-slate-900 font-bold'
+                  : currentStep > 1
+                  ? 'text-slate-700 hover:text-slate-900 font-medium'
+                  : 'text-slate-400 font-medium'
+              }`}
+            >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition ${
-                  currentStep >= 1
-                    ? 'bg-brand-nordic text-white'
-                    : 'bg-slate-200 text-slate-600'
+                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                  currentStep > 1
+                    ? 'bg-slate-300 text-slate-800'
+                    : currentStep === 1
+                    ? 'bg-slate-300 text-slate-800'
+                    : 'bg-slate-200 text-slate-500'
                 }`}
               >
-                1
+                {currentStep > 1 ? <Check className="h-3 w-3 stroke-[3]" /> : '1'}
               </div>
-              <span className={`text-xs font-semibold hidden sm:inline ${currentStep >= 1 ? 'text-slate-900' : 'text-slate-400'}`}>
-                Requirement
-              </span>
+              <span className="text-xs sm:text-sm">Customer type</span>
             </div>
 
-            <div className="flex-1 h-0.5 bg-slate-200 mx-2" />
-
-            {/* Step 2 Indicator */}
-            <div className="flex items-center gap-2 z-10 bg-surface-bg px-2">
+            {/* Step 2 */}
+            <div
+              onClick={() => currentStep > 2 && setCurrentStep(2)}
+              className={`flex items-center gap-2 relative cursor-pointer pb-2 -mb-3 transition ${
+                currentStep === 2
+                  ? 'border-b-2 border-[#1e1b8a] text-slate-900 font-bold'
+                  : currentStep > 2
+                  ? 'text-slate-700 hover:text-slate-900 font-medium'
+                  : 'text-slate-400 font-medium'
+              }`}
+            >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition ${
-                  currentStep >= 2
-                    ? 'bg-brand-nordic text-white'
-                    : 'bg-slate-200 text-slate-600'
+                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                  currentStep > 2
+                    ? 'bg-slate-300 text-slate-800'
+                    : currentStep === 2
+                    ? 'bg-slate-300 text-slate-800'
+                    : 'bg-slate-200 text-slate-500'
                 }`}
               >
-                2
+                {currentStep > 2 ? <Check className="h-3 w-3 stroke-[3]" /> : '2'}
               </div>
-              <span className={`text-xs font-semibold hidden sm:inline ${currentStep >= 2 ? 'text-slate-900' : 'text-slate-400'}`}>
-                Project Details
-              </span>
+              <span className="text-xs sm:text-sm">Product & day</span>
             </div>
 
-            <div className="flex-1 h-0.5 bg-slate-200 mx-2" />
-
-            {/* Step 3 Indicator */}
-            <div className="flex items-center gap-2 z-10 bg-surface-bg pl-2">
+            {/* Step 3 */}
+            <div
+              className={`flex items-center gap-2 relative pb-2 -mb-3 transition ${
+                currentStep === 3
+                  ? 'border-b-2 border-[#1e1b8a] text-slate-900 font-bold'
+                  : 'text-slate-400 font-medium'
+              }`}
+            >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition ${
+                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
                   currentStep === 3
-                    ? 'bg-brand-nordic text-white'
-                    : 'bg-slate-200 text-slate-600'
+                    ? 'bg-slate-300 text-slate-800'
+                    : 'bg-slate-200 text-slate-500'
                 }`}
               >
                 3
               </div>
-              <span className={`text-xs font-semibold hidden sm:inline ${currentStep === 3 ? 'text-slate-900' : 'text-slate-400'}`}>
-                Contact & Review
-              </span>
+              <span className="text-xs sm:text-sm">Contact</span>
             </div>
           </div>
         </div>
 
-        {/* Form Container */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8">
-          {errorMsg && (
-            <div className="mb-6 p-4 rounded-lg bg-rose-50 border border-rose-200 flex items-start gap-3 text-xs text-rose-800">
-              <AlertCircle className="h-4 w-4 text-rose-600 flex-shrink-0 mt-0.5" />
-              <span>{errorMsg}</span>
+        {/* Error Alert */}
+        {errorMsg && (
+          <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-xs text-rose-800">
+            <AlertCircle className="h-4 w-4 text-rose-600 flex-shrink-0 mt-0.5" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          {/* ================= STEP 1: CUSTOMER TYPE ================= */}
+          {currentStep === 1 && (
+            <div className="space-y-4">
+              {/* Option 1: Private person */}
+              <div
+                onClick={() => setFormData({ ...formData, customerType: 'INDIVIDUAL' })}
+                className={`p-4 sm:p-5 rounded-2xl cursor-pointer flex items-center justify-between transition-all ${
+                  formData.customerType === 'INDIVIDUAL'
+                    ? 'border-2 border-[#5046e5] bg-[#f9f8ff] shadow-xs'
+                    : 'border border-slate-200 bg-white hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center transition ${
+                      formData.customerType === 'INDIVIDUAL'
+                        ? 'bg-[#1e1b8a] text-white'
+                        : 'bg-[#f0edff] text-[#1e1b8a]'
+                    }`}
+                  >
+                    <User className="h-6 w-6 stroke-[2]" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                      Private person
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-500">
+                      For your own project
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  {formData.customerType === 'INDIVIDUAL' ? (
+                    <div className="w-6 h-6 rounded-full bg-[#1e1b8a] text-white flex items-center justify-center">
+                      <Check className="h-4 w-4 stroke-[3]" />
+                    </div>
+                  ) : (
+                    <div className="w-6 h-6 rounded-full border-2 border-slate-300" />
+                  )}
+                </div>
+              </div>
+
+              {/* Option 2: Business */}
+              <div
+                onClick={() => setFormData({ ...formData, customerType: 'BUSINESS' })}
+                className={`p-4 sm:p-5 rounded-2xl cursor-pointer flex items-center justify-between transition-all ${
+                  formData.customerType === 'BUSINESS'
+                    ? 'border-2 border-[#5046e5] bg-[#f9f8ff] shadow-xs'
+                    : 'border border-slate-200 bg-white hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center transition ${
+                      formData.customerType === 'BUSINESS'
+                        ? 'bg-[#1e1b8a] text-white'
+                        : 'bg-[#f0edff] text-[#1e1b8a]'
+                    }`}
+                  >
+                    <Building2 className="h-6 w-6 stroke-[2]" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                      Business
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-500">
+                      For the company
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  {formData.customerType === 'BUSINESS' ? (
+                    <div className="w-6 h-6 rounded-full bg-[#1e1b8a] text-white flex items-center justify-center">
+                      <Check className="h-4 w-4 stroke-[3]" />
+                    </div>
+                  ) : (
+                    <div className="w-6 h-6 rounded-full border-2 border-slate-300" />
+                  )}
+                </div>
+              </div>
+
+              <p className="text-xs sm:text-sm text-slate-500 pt-3">
+                You will receive a unique case number when you submit your request.
+              </p>
+
+              {/* Bottom Navigation */}
+              <div className="flex justify-end pt-8">
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="w-14 h-14 rounded-full bg-[#1e1b8a] hover:bg-[#151263] text-white flex items-center justify-center shadow-lg transition-transform active:scale-95"
+                  aria-label="Next step"
+                >
+                  <ArrowRight className="h-6 w-6 stroke-[2.5]" />
+                </button>
+              </div>
+
+              <p className="text-xs text-slate-400 text-center pt-8">
+                Free inquiry. You only order after you have seen the price proposal.
+              </p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
-            {/* ================= STEP 1: REQUIREMENT ================= */}
-            {currentStep === 1 && (
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
-                    Customer Type
-                  </label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, customerType: 'INDIVIDUAL' })}
-                      className={`p-4 rounded-lg border text-left flex items-center gap-3 transition ${
-                        formData.customerType === 'INDIVIDUAL'
-                          ? 'border-brand-nordic bg-brand-50/50 text-slate-900 ring-1 ring-brand-nordic'
-                          : 'border-slate-200 hover:border-slate-300 text-slate-700'
-                      }`}
-                    >
-                      <User className="h-5 w-5 text-slate-600" />
-                      <div>
-                        <div className="text-sm font-semibold">Individual / Private</div>
-                        <div className="text-xs text-slate-500">For home, garage or garden</div>
-                      </div>
-                    </button>
+          {/* ================= STEP 2: PRODUCT & DAY ================= */}
+          {currentStep === 2 && (
+            <div className="space-y-5">
+              {/* Product input */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-800 mb-2">
+                  What would you like to order? *
+                </label>
+                <input
+                  type="text"
+                  placeholder="For example. Curb S2 or concrete C30/37"
+                  value={formData.productName}
+                  onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
+                  className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e1b8a] focus:border-[#1e1b8a] transition"
+                />
+              </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, customerType: 'BUSINESS' })}
-                      className={`p-4 rounded-lg border text-left flex items-center gap-3 transition ${
-                        formData.customerType === 'BUSINESS'
-                          ? 'border-brand-nordic bg-brand-50/50 text-slate-900 ring-1 ring-brand-nordic'
-                          : 'border-slate-200 hover:border-slate-300 text-slate-700'
-                      }`}
-                    >
-                      <Building2 className="h-5 w-5 text-slate-600" />
-                      <div>
-                        <div className="text-sm font-semibold">Company / Contractor</div>
-                        <div className="text-xs text-slate-500">Commercial & construction</div>
-                      </div>
-                    </button>
-                  </div>
+              {/* Help me choose banner */}
+              <div
+                onClick={() => setFormData({ ...formData, helpMeChoose: !formData.helpMeChoose })}
+                className="p-3.5 rounded-xl bg-[#f4f1ff] border border-indigo-100 flex items-center gap-3 cursor-pointer select-none transition hover:bg-[#ede9fe]"
+              >
+                <div
+                  className={`w-5 h-5 rounded flex items-center justify-center transition ${
+                    formData.helpMeChoose
+                      ? 'bg-[#1e1b8a] text-white'
+                      : 'border-2 border-slate-400 bg-white'
+                  }`}
+                >
+                  {formData.helpMeChoose && <Check className="h-3.5 w-3.5 stroke-[3]" />}
                 </div>
+                <span className="font-bold text-[#1e1b8a] text-sm sm:text-base">
+                  I don't know – help me choose
+                </span>
+              </div>
 
-                {/* Compare my quote toggle */}
-                <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Scale className="h-5 w-5 text-emerald-700" />
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">
-                        Compare my quote
-                      </div>
-                      <div className="text-xs text-slate-500">
-                        I already have a price quote and want Betongportalen to beat it.
-                      </div>
-                    </div>
-                  </div>
+              {/* Conditional project description */}
+              {formData.helpMeChoose && (
+                <div className="pt-1">
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">
+                    What are you going to build or cast? *
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="For example, I'm going to pour a 30 m² garage slab."
+                    value={formData.projectDescription}
+                    onChange={(e) => setFormData({ ...formData, projectDescription: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e1b8a] focus:border-[#1e1b8a] transition resize-none"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Briefly describe the project and Order will help you find the right product.
+                  </p>
+                </div>
+              )}
+
+              {/* Quantity and Desired day row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">
+                    Quantity *
+                  </label>
                   <input
-                    type="checkbox"
-                    id="compareQuote"
-                    checked={formData.isQuoteComparison}
-                    onChange={(e) => setFormData({ ...formData, isQuoteComparison: e.target.checked })}
-                    className="h-4 w-4 rounded border-slate-300 text-brand-nordic focus:ring-brand-nordic"
+                    type="text"
+                    placeholder="E.g. 5 or 2.5"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                    className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e1b8a] focus:border-[#1e1b8a] transition"
                   />
                 </div>
 
-                {/* Product Selection */}
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
-                    Product / Concrete Type
-                  </label>
-                  {loadingProducts ? (
-                    <div className="text-xs text-slate-500">Loading product list...</div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {products.map((p) => {
-                        const isSelected = formData.selectedProductId === p.id;
-                        // Map product category to image
-                        const imgType = p.name.toLowerCase().includes('semi-dry') || p.name.toLowerCase().includes('jordfuktig')
-                          ? 'semidry'
-                          : p.name.toLowerCase().includes('kerbstone') || p.name.toLowerCase().includes('kantsten')
-                          ? 'kerbstone'
-                          : p.name.toLowerCase().includes('rock') || p.name.toLowerCase().includes('aggregate') || p.name.toLowerCase().includes('bärlager')
-                          ? 'aggregate'
-                          : 'readymix';
-
-                        const imgUrl = imgType === 'semidry'
-                          ? 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=300&q=80'
-                          : imgType === 'kerbstone'
-                          ? 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=300&q=80'
-                          : imgType === 'aggregate'
-                          ? 'https://images.unsplash.com/photo-1584463699042-421715694a11?auto=format&fit=crop&w=300&q=80'
-                          : 'https://images.unsplash.com/photo-1517581177682-a085bb7ffb15?auto=format&fit=crop&w=300&q=80';
-
-                        return (
-                          <div
-                            key={p.id}
-                            onClick={() => handleProductChange(p.id)}
-                            className={`p-3 rounded-xl border cursor-pointer flex gap-3 items-center transition ${
-                              isSelected
-                                ? 'border-brand-nordic bg-brand-50/50 ring-1 ring-brand-nordic shadow-sm'
-                                : 'border-slate-200 hover:border-slate-300 bg-white'
-                            }`}
-                          >
-                            <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 border border-slate-200 bg-slate-800">
-                              <img
-                                src={imgUrl}
-                                alt={p.name}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  // Fallback to solid brand badge if external CDN blocked
-                                  (e.target as HTMLElement).style.display = 'none';
-                                }}
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-xs font-bold text-slate-900 truncate">
-                                {p.name}
-                              </div>
-                              <div className="text-[11px] text-slate-500 line-clamp-1">
-                                {p.description}
-                              </div>
-                              <span className="text-[10px] font-mono font-medium text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded mt-1 inline-block">
-                                Unit: {p.defaultUnit}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      {/* Custom Option Card */}
-                      <div
-                        onClick={() => handleProductChange('custom')}
-                        className={`p-3 rounded-xl border cursor-pointer flex gap-3 items-center transition ${
-                          formData.selectedProductId === 'custom'
-                            ? 'border-brand-nordic bg-brand-50/50 ring-1 ring-brand-nordic shadow-sm'
-                            : 'border-slate-200 hover:border-slate-300 bg-white'
-                        }`}
-                      >
-                        <div className="w-14 h-14 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 flex-shrink-0">
-                          <Layers className="h-6 w-6" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs font-bold text-slate-900">
-                            Other / Custom Product
-                          </div>
-                          <div className="text-[11px] text-slate-500">
-                            Specify bespoke concrete grade or precast mix
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Custom product description if selected */}
-                {formData.selectedProductId === 'custom' && (
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">
-                      Custom Product Description
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Special marine concrete or fiber mix"
-                      value={formData.customProductText}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          customProductText: e.target.value,
-                          productName: e.target.value,
-                        })
-                      }
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-nordic/20 focus:border-brand-nordic"
-                    />
-                  </div>
-                )}
-
-                {/* Compare Quote Extra Fields (No file upload) */}
-                {formData.isQuoteComparison && (
-                  <div className="p-4 rounded-lg bg-emerald-50/50 border border-emerald-200 space-y-4">
-                    <div className="text-xs font-semibold text-emerald-900 uppercase tracking-wider">
-                      Quote Comparison Details
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">
-                        Current Quoted Price (inc. or excl. VAT) *
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 34 500 SEK total or 1 450 SEK/m³"
-                        value={formData.currentQuotedPrice}
-                        onChange={(e) => setFormData({ ...formData, currentQuotedPrice: e.target.value })}
-                        className="w-full px-3 py-2 rounded-md border border-slate-300 text-sm bg-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">
-                        Relevant Terms & Delivery Conditions
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 20 min unloading time, pump included, delivery date guaranteed"
-                        value={formData.terms}
-                        onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
-                        className="w-full px-3 py-2 rounded-md border border-slate-300 text-sm bg-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">
-                        Additional Notes on Current Quote
-                      </label>
-                      <textarea
-                        rows={2}
-                        placeholder="Any extra info about what was offered..."
-                        value={formData.additionalDescription}
-                        onChange={(e) => setFormData({ ...formData, additionalDescription: e.target.value })}
-                        className="w-full px-3 py-2 rounded-md border border-slate-300 text-sm bg-white"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className="pt-4 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={handleNext}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-brand-nordic text-white text-sm font-semibold hover:bg-brand-nordicDark transition"
-                  >
-                    <span>Next: Project Details</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* ================= STEP 2: PROJECT DETAILS ================= */}
-            {currentStep === 2 && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
-                      Quantity *
-                    </label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      min="0.5"
-                      value={formData.quantity}
-                      onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-nordic/20 focus:border-brand-nordic"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
-                      Unit *
-                    </label>
-                    <select
-                      value={formData.unit}
-                      onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-nordic/20 focus:border-brand-nordic"
-                    >
-                      <option value="m³">m³ (Cubic meters)</option>
-                      <option value="tonnes">Tonnes</option>
-                      <option value="pieces">Pieces / St</option>
-                      <option value="pallets">Pallets</option>
-                      <option value="running meters">Running meters (Lpm)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
-                    Project / Delivery Address *
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">
+                    Desired day *
                   </label>
                   <div className="relative">
-                    <MapPin className="h-4 w-4 text-slate-400 absolute left-3.5 top-3.5" />
-                    <input
-                      type="text"
-                      placeholder="Street address, postal code, city (e.g. Storgatan 14, 111 22 Stockholm)"
-                      value={formData.deliveryAddress}
-                      onChange={(e) => setFormData({ ...formData, deliveryAddress: e.target.value })}
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-nordic/20 focus:border-brand-nordic"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
-                    Desired Delivery Date
-                  </label>
-                  <div className="relative">
-                    <Calendar className="h-4 w-4 text-slate-400 absolute left-3.5 top-3.5" />
                     <input
                       type="date"
                       value={formData.desiredDeliveryDate}
                       onChange={(e) => setFormData({ ...formData, desiredDeliveryDate: e.target.value })}
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-nordic/20 focus:border-brand-nordic"
+                      className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e1b8a] focus:border-[#1e1b8a] transition bg-white"
                     />
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-700">
+                      <Calendar className="h-5 w-5" />
+                    </div>
                   </div>
                 </div>
+              </div>
 
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
-                    Delivery Requirements
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Concrete pump required, narrow street, weight limit 20t, chute access"
-                    value={formData.deliveryRequirements}
-                    onChange={(e) => setFormData({ ...formData, deliveryRequirements: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-nordic/20 focus:border-brand-nordic"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
-                    Additional Technical Requirements
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Slump class S4, max stone size 16mm, exposure class XC2"
-                    value={formData.technicalRequirements}
-                    onChange={(e) => setFormData({ ...formData, technicalRequirements: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-nordic/20 focus:border-brand-nordic"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
-                    Optional Comments
-                  </label>
-                  <textarea
-                    rows={3}
-                    placeholder="Any other details our advisors should know about your site or project..."
-                    value={formData.comments}
-                    onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-nordic/20 focus:border-brand-nordic"
-                  />
-                </div>
-
-                <div className="pt-4 flex items-center justify-between">
+              {/* Delivery method */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-800 mb-2">
+                  Delivery method *
+                </label>
+                <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
-                    onClick={handleBack}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+                    onClick={() => setFormData({ ...formData, deliveryMethod: 'DELIVERY' })}
+                    className={`py-3.5 px-4 rounded-2xl border text-sm flex items-center justify-center gap-2.5 transition ${
+                      formData.deliveryMethod === 'DELIVERY'
+                        ? 'border-2 border-[#1e1b8a] bg-[#f8f7ff] text-[#1e1b8a] font-bold shadow-xs'
+                        : 'border border-slate-200 bg-white text-slate-700 hover:border-slate-300 font-medium'
+                    }`}
                   >
-                    <ArrowLeft className="h-4 w-4" />
-                    <span>Back</span>
+                    <Truck className="h-4 w-4 stroke-[2]" />
+                    <span>Exit</span>
                   </button>
+
                   <button
                     type="button"
-                    onClick={handleNext}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-brand-nordic text-white text-sm font-semibold hover:bg-brand-nordicDark transition"
+                    onClick={() => setFormData({ ...formData, deliveryMethod: 'PICKUP' })}
+                    className={`py-3.5 px-4 rounded-2xl border text-sm flex items-center justify-center gap-2.5 transition ${
+                      formData.deliveryMethod === 'PICKUP'
+                        ? 'border-2 border-[#1e1b8a] bg-[#f8f7ff] text-[#1e1b8a] font-bold shadow-xs'
+                        : 'border border-slate-200 bg-white text-slate-700 hover:border-slate-300 font-medium'
+                    }`}
                   >
-                    <span>Next: Contact & Review</span>
-                    <ArrowRight className="h-4 w-4" />
+                    <Package className="h-4 w-4 stroke-[2]" />
+                    <span>Download yourself</span>
+                  </button>
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  Availability and delivery are confirmed in the price quote.
+                </p>
+              </div>
+
+              {/* Bottom Navigation */}
+              <div className="flex items-center justify-between pt-6">
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="w-12 h-12 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-700 transition"
+                  aria-label="Back"
+                >
+                  <ArrowLeft className="h-5 w-5 stroke-[2]" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="w-14 h-14 rounded-full bg-[#1e1b8a] hover:bg-[#151263] text-white flex items-center justify-center shadow-lg transition-transform active:scale-95"
+                  aria-label="Next step"
+                >
+                  <ArrowRight className="h-6 w-6 stroke-[2.5]" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ================= STEP 3: CONTACT & REVIEW ================= */}
+          {currentStep === 3 && (
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-semibold text-slate-800 mb-2">
+                  Your name *
+                </label>
+                <input
+                  type="text"
+                  placeholder="First and last name"
+                  value={formData.customerName}
+                  onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                  className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e1b8a] focus:border-[#1e1b8a] transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-800 mb-2">
+                  Email address *
+                </label>
+                <input
+                  type="email"
+                  placeholder="name@example.com"
+                  value={formData.customerEmail}
+                  onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
+                  className="w-full px-4 py-3.5 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e1b8a] focus:border-[#1e1b8a] transition"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-semibold text-slate-800">
+                    Other information
+                  </label>
+                  <span className="text-xs text-slate-400 font-medium">Optional</span>
+                </div>
+                <textarea
+                  rows={3}
+                  placeholder="Delivery address, desired time or anything else we need to know..."
+                  value={formData.otherInfo}
+                  onChange={(e) => setFormData({ ...formData, otherInfo: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e1b8a] focus:border-[#1e1b8a] transition resize-none"
+                />
+              </div>
+
+              {/* Summary box before submission */}
+              <div className="border-t border-b border-slate-200 py-4 my-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 text-slate-700">
+                      {formData.deliveryMethod === 'PICKUP' ? (
+                        <Package className="h-5 w-5 stroke-[2]" />
+                      ) : (
+                        <Truck className="h-5 w-5 stroke-[2]" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-900 text-sm">
+                        Product selection: {formData.productName.trim() || (formData.helpMeChoose ? 'Bespoke advice' : 'flat')}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-1.5 font-medium">
+                        <span>{formData.quantity || '1'}</span>
+                        <span>·</span>
+                        <span>{formData.desiredDeliveryDate || 'Date to be confirmed'}</span>
+                        <span>·</span>
+                        <span>{formData.deliveryMethod === 'PICKUP' ? 'Download yourself' : 'Exit'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep(2)}
+                    className="text-sm font-semibold text-[#1e1b8a] hover:text-[#151263] underline cursor-pointer"
+                  >
+                    Change
                   </button>
                 </div>
               </div>
-            )}
 
-            {/* ================= STEP 3: CONTACT & REVIEW ================= */}
-            {currentStep === 3 && (
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-700">
-                    Contact Information
-                  </div>
+              {/* Bottom Navigation */}
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="w-12 h-12 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-700 transition"
+                  aria-label="Back"
+                >
+                  <ArrowLeft className="h-5 w-5 stroke-[2]" />
+                </button>
 
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">
-                      {formData.customerType === 'BUSINESS' ? 'Company Name / Contact Person *' : 'Full Name *'}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Anders Svensson or Svensson Bygg AB"
-                      value={formData.customerName}
-                      onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-nordic/20 focus:border-brand-nordic"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">
-                        Email Address *
-                      </label>
-                      <input
-                        type="email"
-                        placeholder="name@example.com"
-                        value={formData.customerEmail}
-                        onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
-                        className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-nordic/20 focus:border-brand-nordic"
-                      />
-                      <span className="text-[11px] text-slate-500 mt-1 block">
-                        We send your case reference and secure access codes here.
-                      </span>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">
-                        Phone Number *
-                      </label>
-                      <input
-                        type="tel"
-                        placeholder="+46 70 123 45 67"
-                        value={formData.customerPhone}
-                        onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
-                        className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-nordic/20 focus:border-brand-nordic"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Complete Review Summary */}
-                <div className="p-5 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-700">
-                    <ClipboardCheck className="h-4 w-4 text-emerald-700" />
-                    <span>Inquiry Review Summary</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs text-slate-600 border-t border-slate-200 pt-3">
-                    <div>
-                      <span className="font-semibold text-slate-800">Customer Type: </span>
-                      {formData.customerType === 'BUSINESS' ? 'Business' : 'Individual'}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-slate-800">Product: </span>
-                      {formData.productName}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-slate-800">Quantity: </span>
-                      {formData.quantity} {formData.unit}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-slate-800">Delivery Date: </span>
-                      {formData.desiredDeliveryDate || 'Flexible / As soon as possible'}
-                    </div>
-                    <div className="sm:col-span-2">
-                      <span className="font-semibold text-slate-800">Address: </span>
-                      {formData.deliveryAddress}
-                    </div>
-                    {formData.deliveryRequirements && (
-                      <div className="sm:col-span-2">
-                        <span className="font-semibold text-slate-800">Delivery Requirements: </span>
-                        {formData.deliveryRequirements}
-                      </div>
-                    )}
-                    {formData.isQuoteComparison && (
-                      <div className="sm:col-span-2 text-emerald-800 font-medium">
-                        Quote Comparison Active • Stated Price: {formData.currentQuotedPrice}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Privacy Policy Checkbox */}
-                <div className="flex items-start gap-3 pt-2">
-                  <input
-                    type="checkbox"
-                    id="privacy"
-                    checked={formData.privacyAccepted}
-                    onChange={(e) => setFormData({ ...formData, privacyAccepted: e.target.checked })}
-                    className="h-4 w-4 mt-0.5 rounded border-slate-300 text-brand-nordic focus:ring-brand-nordic"
-                  />
-                  <label htmlFor="privacy" className="text-xs text-slate-600 leading-normal">
-                    I accept the{' '}
-                    <Link to="/privacy" target="_blank" className="text-brand-nordic underline font-medium">
-                      Privacy Policy (GDPR)
-                    </Link>{' '}
-                    and consent to Betongportalen storing my inquiry details and contacting me with quotations.
-                  </label>
-                </div>
-
-                <div className="pt-4 flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={handleBack}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    <span>Back</span>
-                  </button>
-
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="inline-flex items-center gap-2 px-7 py-3 rounded-lg bg-brand-nordic text-white text-sm font-semibold hover:bg-brand-nordicDark active:scale-[0.99] disabled:opacity-50 transition shadow-sm"
-                  >
-                    {submitting ? (
-                      <span>Submitting inquiry...</span>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4" />
-                        <span>Submit inquiry & get case reference</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 px-8 py-3.5 sm:py-4 rounded-full bg-[#1e1b8a] hover:bg-[#151263] text-white font-bold text-base flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-[0.98] disabled:opacity-50"
+                >
+                  {submitting ? (
+                    <span>Sending inquiry...</span>
+                  ) : (
+                    <>
+                      <span>Send inquiry</span>
+                      <ArrowRight className="h-5 w-5 stroke-[2.5]" />
+                    </>
+                  )}
+                </button>
               </div>
-            )}
-          </form>
-        </div>
+
+              <p className="text-xs text-slate-400 mt-3 text-center sm:text-left">
+                You can find the request under My projects with the same email address
+              </p>
+            </div>
+          )}
+        </form>
       </div>
     </div>
   );
 };
-
