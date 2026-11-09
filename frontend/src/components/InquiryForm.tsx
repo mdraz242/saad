@@ -153,11 +153,11 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
   if (submittedCase) {
     return (
       <div className={`bg-white rounded-3xl border border-slate-200/90 shadow-xl p-6 sm:p-8 text-center ${className}`}>
-        <div className="w-14 h-14 bg-[#ede9fe] text-[#1e1b8a] rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-          <Check className="h-7 w-7 stroke-[2.5]" />
+        <div className="w-14 h-14 bg-emerald-50 text-brand-nordic rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-emerald-100">
+          <Check className="h-7 w-7 stroke-[2.5] text-emerald-700" />
         </div>
 
-        <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#1e1b8a]">
+        <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800">
           YOUR FREE INQUIRY
         </span>
         <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
@@ -167,12 +167,12 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
           Thank you, <strong>{formData.customerName}</strong>. We are comparing prices from regional concrete plants to get you the best offer.
         </p>
 
-        <div className="mt-5 p-4 rounded-2xl bg-[#f8f7ff] border border-indigo-100 text-left">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
+        <div className="mt-5 p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 text-left">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block mb-1">
             Your Unique Case Reference
           </span>
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xl sm:text-2xl font-mono font-bold text-[#1e1b8a] tracking-wider">
+            <span className="text-xl sm:text-2xl font-mono font-bold text-brand-nordic tracking-wider">
               {submittedCase.caseNumber}
             </span>
             <button
@@ -193,7 +193,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
               )}
             </button>
           </div>
-          <p className="text-[11px] text-slate-500 mt-2 border-t border-slate-200/60 pt-1.5">
+          <p className="text-[11px] text-slate-600 mt-2 border-t border-emerald-200/60 pt-1.5">
             Confirmation sent to <strong>{formData.customerEmail}</strong>.
           </p>
         </div>
@@ -201,7 +201,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             to={`/find-case?caseNumber=${submittedCase.caseNumber}`}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#1e1b8a] text-white text-xs sm:text-sm font-semibold hover:bg-[#151263] transition shadow-md"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-brand-nordic text-white text-xs sm:text-sm font-semibold hover:bg-brand-nordicDark transition shadow-md"
           >
             <FolderKanban className="h-4 w-4" />
             <span>Track your case</span>
@@ -226,7 +226,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
       {/* Top Header: Badge + Step Counter */}
       <div className="flex items-start justify-between mb-1">
         <div>
-          <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#1e1b8a]">
+          <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800">
             YOUR FREE INQUIRY
           </span>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5">
@@ -257,7 +257,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
             onClick={() => currentStep > 1 && setCurrentStep(1)}
             className={`flex items-center gap-1.5 relative cursor-pointer pb-2 -mb-2.5 transition ${
               currentStep === 1
-                ? 'border-b-2 border-[#1e1b8a] text-slate-900 font-bold'
+                ? 'border-b-2 border-brand-nordic text-slate-900 font-bold'
                 : currentStep > 1
                 ? 'text-slate-700 hover:text-slate-900 font-medium'
                 : 'text-slate-400 font-medium'
@@ -266,9 +266,9 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
             <div
               className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${
                 currentStep > 1
-                  ? 'bg-slate-300 text-slate-800'
+                  ? 'bg-emerald-100 text-emerald-800'
                   : currentStep === 1
-                  ? 'bg-slate-300 text-slate-800'
+                  ? 'bg-brand-nordic text-white'
                   : 'bg-slate-200 text-slate-500'
               }`}
             >
@@ -282,7 +282,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
             onClick={() => currentStep > 2 && setCurrentStep(2)}
             className={`flex items-center gap-1.5 relative cursor-pointer pb-2 -mb-2.5 transition ${
               currentStep === 2
-                ? 'border-b-2 border-[#1e1b8a] text-slate-900 font-bold'
+                ? 'border-b-2 border-brand-nordic text-slate-900 font-bold'
                 : currentStep > 2
                 ? 'text-slate-700 hover:text-slate-900 font-medium'
                 : 'text-slate-400 font-medium'
@@ -291,9 +291,9 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
             <div
               className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${
                 currentStep > 2
-                  ? 'bg-slate-300 text-slate-800'
+                  ? 'bg-emerald-100 text-emerald-800'
                   : currentStep === 2
-                  ? 'bg-slate-300 text-slate-800'
+                  ? 'bg-brand-nordic text-white'
                   : 'bg-slate-200 text-slate-500'
               }`}
             >
@@ -306,14 +306,14 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
           <div
             className={`flex items-center gap-1.5 relative pb-2 -mb-2.5 transition ${
               currentStep === 3
-                ? 'border-b-2 border-[#1e1b8a] text-slate-900 font-bold'
+                ? 'border-b-2 border-brand-nordic text-slate-900 font-bold'
                 : 'text-slate-400 font-medium'
             }`}
           >
             <div
               className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${
                 currentStep === 3
-                  ? 'bg-slate-300 text-slate-800'
+                  ? 'bg-brand-nordic text-white'
                   : 'bg-slate-200 text-slate-500'
               }`}
             >
@@ -341,7 +341,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
               onClick={() => setFormData({ ...formData, customerType: 'INDIVIDUAL' })}
               className={`p-3.5 sm:p-4 rounded-2xl cursor-pointer flex items-center justify-between transition-all ${
                 formData.customerType === 'INDIVIDUAL'
-                  ? 'border-2 border-[#5046e5] bg-[#f9f8ff] shadow-xs'
+                  ? 'border-2 border-brand-nordic bg-emerald-50/50 shadow-xs'
                   : 'border border-slate-200 bg-white hover:border-slate-300'
               }`}
             >
@@ -349,8 +349,8 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
                 <div
                   className={`w-11 h-11 rounded-2xl flex items-center justify-center transition ${
                     formData.customerType === 'INDIVIDUAL'
-                      ? 'bg-[#1e1b8a] text-white'
-                      : 'bg-[#f0edff] text-[#1e1b8a]'
+                      ? 'bg-brand-nordic text-white'
+                      : 'bg-emerald-50 text-brand-nordic'
                   }`}
                 >
                   <User className="h-5 w-5 stroke-[2]" />
@@ -367,7 +367,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
 
               <div>
                 {formData.customerType === 'INDIVIDUAL' ? (
-                  <div className="w-5 h-5 rounded-full bg-[#1e1b8a] text-white flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-full bg-brand-nordic text-white flex items-center justify-center">
                     <Check className="h-3 w-3 stroke-[3]" />
                   </div>
                 ) : (
@@ -381,7 +381,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
               onClick={() => setFormData({ ...formData, customerType: 'BUSINESS' })}
               className={`p-3.5 sm:p-4 rounded-2xl cursor-pointer flex items-center justify-between transition-all ${
                 formData.customerType === 'BUSINESS'
-                  ? 'border-2 border-[#5046e5] bg-[#f9f8ff] shadow-xs'
+                  ? 'border-2 border-brand-nordic bg-emerald-50/50 shadow-xs'
                   : 'border border-slate-200 bg-white hover:border-slate-300'
               }`}
             >
@@ -389,8 +389,8 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
                 <div
                   className={`w-11 h-11 rounded-2xl flex items-center justify-center transition ${
                     formData.customerType === 'BUSINESS'
-                      ? 'bg-[#1e1b8a] text-white'
-                      : 'bg-[#f0edff] text-[#1e1b8a]'
+                      ? 'bg-brand-nordic text-white'
+                      : 'bg-emerald-50 text-brand-nordic'
                   }`}
                 >
                   <Building2 className="h-5 w-5 stroke-[2]" />
@@ -407,7 +407,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
 
               <div>
                 {formData.customerType === 'BUSINESS' ? (
-                  <div className="w-5 h-5 rounded-full bg-[#1e1b8a] text-white flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-full bg-brand-nordic text-white flex items-center justify-center">
                     <Check className="h-3 w-3 stroke-[3]" />
                   </div>
                 ) : (
@@ -425,7 +425,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
               <button
                 type="button"
                 onClick={handleNext}
-                className="w-12 h-12 rounded-full bg-[#1e1b8a] hover:bg-[#151263] text-white flex items-center justify-center shadow-lg transition-transform active:scale-95"
+                className="w-12 h-12 rounded-full bg-brand-nordic hover:bg-brand-nordicDark text-white flex items-center justify-center shadow-lg transition-transform active:scale-95"
                 aria-label="Next step"
               >
                 <ArrowRight className="h-5 w-5 stroke-[2.5]" />
@@ -451,25 +451,25 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
                 placeholder="For example. Curb S2 or concrete C30/37"
                 value={formData.productName}
                 onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
-                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-slate-900 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e1b8a] focus:border-[#1e1b8a] transition"
+                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-slate-900 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-nordic focus:border-brand-nordic transition"
               />
             </div>
 
             {/* Help me choose banner */}
             <div
               onClick={() => setFormData({ ...formData, helpMeChoose: !formData.helpMeChoose })}
-              className="p-3 rounded-xl bg-[#f4f1ff] border border-indigo-100 flex items-center gap-2.5 cursor-pointer select-none transition hover:bg-[#ede9fe]"
+              className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 flex items-center gap-2.5 cursor-pointer select-none transition hover:bg-emerald-100/60"
             >
               <div
                 className={`w-4 h-4 rounded flex items-center justify-center transition ${
                   formData.helpMeChoose
-                    ? 'bg-[#1e1b8a] text-white'
-                    : 'border-2 border-slate-400 bg-white'
+                    ? 'bg-brand-nordic text-white'
+                    : 'border-2 border-emerald-700/50 bg-white'
                 }`}
               >
                 {formData.helpMeChoose && <Check className="h-3 w-3 stroke-[3]" />}
               </div>
-              <span className="font-bold text-[#1e1b8a] text-xs sm:text-sm">
+              <span className="font-bold text-brand-nordic text-xs sm:text-sm">
                 I don't know – help me choose
               </span>
             </div>
@@ -485,7 +485,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
                   placeholder="For example, I'm going to pour a 30 m² garage slab."
                   value={formData.projectDescription}
                   onChange={(e) => setFormData({ ...formData, projectDescription: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e1b8a] focus:border-[#1e1b8a] transition resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-nordic focus:border-brand-nordic transition resize-none"
                 />
                 <p className="text-[11px] text-slate-500 mt-1">
                   Briefly describe the project and Order will help you find the right product.
@@ -504,7 +504,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
                   placeholder="E.g. 5 or 2.5"
                   value={formData.quantity}
                   onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                  className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-slate-900 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e1b8a] focus:border-[#1e1b8a] transition"
+                  className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-slate-900 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-nordic focus:border-brand-nordic transition"
                 />
               </div>
 
@@ -517,7 +517,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
                     type="date"
                     value={formData.desiredDeliveryDate}
                     onChange={(e) => setFormData({ ...formData, desiredDeliveryDate: e.target.value })}
-                    className="w-full pl-9 pr-3 py-3 rounded-xl border border-slate-200 text-slate-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1e1b8a] focus:border-[#1e1b8a] transition bg-white"
+                    className="w-full pl-9 pr-3 py-3 rounded-xl border border-slate-200 text-slate-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-nordic focus:border-brand-nordic transition bg-white"
                   />
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-700">
                     <Calendar className="h-4 w-4" />
@@ -537,7 +537,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
                   onClick={() => setFormData({ ...formData, deliveryMethod: 'DELIVERY' })}
                   className={`py-3 px-3 rounded-xl border text-xs sm:text-sm flex items-center justify-center gap-2 transition ${
                     formData.deliveryMethod === 'DELIVERY'
-                      ? 'border-2 border-[#1e1b8a] bg-[#f8f7ff] text-[#1e1b8a] font-bold shadow-xs'
+                      ? 'border-2 border-brand-nordic bg-emerald-50/70 text-brand-nordic font-bold shadow-xs'
                       : 'border border-slate-200 bg-white text-slate-700 hover:border-slate-300 font-medium'
                   }`}
                 >
@@ -550,7 +550,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
                   onClick={() => setFormData({ ...formData, deliveryMethod: 'PICKUP' })}
                   className={`py-3 px-3 rounded-xl border text-xs sm:text-sm flex items-center justify-center gap-2 transition ${
                     formData.deliveryMethod === 'PICKUP'
-                      ? 'border-2 border-[#1e1b8a] bg-[#f8f7ff] text-[#1e1b8a] font-bold shadow-xs'
+                      ? 'border-2 border-brand-nordic bg-emerald-50/70 text-brand-nordic font-bold shadow-xs'
                       : 'border border-slate-200 bg-white text-slate-700 hover:border-slate-300 font-medium'
                   }`}
                 >
@@ -577,7 +577,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
               <button
                 type="button"
                 onClick={handleNext}
-                className="w-12 h-12 rounded-full bg-[#1e1b8a] hover:bg-[#151263] text-white flex items-center justify-center shadow-lg transition-transform active:scale-95"
+                className="w-12 h-12 rounded-full bg-brand-nordic hover:bg-brand-nordicDark text-white flex items-center justify-center shadow-lg transition-transform active:scale-95"
                 aria-label="Next step"
               >
                 <ArrowRight className="h-5 w-5 stroke-[2.5]" />
@@ -598,7 +598,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
                 placeholder="First and last name"
                 value={formData.customerName}
                 onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-slate-900 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e1b8a] focus:border-[#1e1b8a] transition"
+                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-slate-900 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-nordic focus:border-brand-nordic transition"
               />
             </div>
 
@@ -611,7 +611,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
                 placeholder="name@example.com"
                 value={formData.customerEmail}
                 onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
-                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-slate-900 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e1b8a] focus:border-[#1e1b8a] transition"
+                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-slate-900 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-nordic focus:border-brand-nordic transition"
               />
             </div>
 
@@ -627,7 +627,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
                 placeholder="Delivery address, desired time or anything else we need to know..."
                 value={formData.otherInfo}
                 onChange={(e) => setFormData({ ...formData, otherInfo: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e1b8a] focus:border-[#1e1b8a] transition resize-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-nordic focus:border-brand-nordic transition resize-none"
               />
             </div>
 
@@ -635,7 +635,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
             <div className="border-t border-b border-slate-200 py-3 my-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-2.5">
-                  <div className="mt-0.5 text-slate-700">
+                  <div className="mt-0.5 text-brand-nordic">
                     {formData.deliveryMethod === 'PICKUP' ? (
                       <Package className="h-4 w-4 stroke-[2]" />
                     ) : (
@@ -659,7 +659,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
                 <button
                   type="button"
                   onClick={() => setCurrentStep(2)}
-                  className="text-xs font-semibold text-[#1e1b8a] hover:text-[#151263] underline cursor-pointer"
+                  className="text-xs font-semibold text-brand-nordic hover:text-brand-nordicDark underline cursor-pointer"
                 >
                   Change
                 </button>
@@ -680,7 +680,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ className = '', isHero
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 px-6 py-3.5 rounded-full bg-[#1e1b8a] hover:bg-[#151263] text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-[0.98] disabled:opacity-50"
+                className="flex-1 px-6 py-3.5 rounded-full bg-brand-nordic hover:bg-brand-nordicDark text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-[0.98] disabled:opacity-50"
               >
                 {submitting ? (
                   <span>Sending inquiry...</span>
